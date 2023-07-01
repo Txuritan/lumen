@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>lumen</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <style>
+* {
+    font-family: monospace;
+}
+
+body {
+    display: flex;
+    overflow-x: scroll;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+form {
+    display: inline-block;
+}
+
+fieldset {
+    display: inline-block;
+    border: 1px solid #a0a0a0;
+    margin: 0.5rem;
+    white-space: nowrap;
+}
+
+legend {
+    background-color: #000;
+    color: #fff;
+    padding: 3px 6px;
+    user-select: none;
+}
+
+input {
+    margin: 0.4rem;
+}
+
+p {
+    margin: 0.25rem 0;
+}
+
+table {
+    width: 100%;
+}
+
+td {
+    padding: 0;
+}
+
+hr {
+    display: block;
+    height: 1px;
+    border: 0;
+    border-top: 1px solid #a0a0a0;
+    margin: 0.5em 0;
+    padding: 0;
+}
+
+ul {
+    margin: 0.5em 0;
+    padding-left: 1.5rem;
+}
+
+code {
+    appearance: button;
+}
+
+.text-right {
+    text-align: right;
+}
+    </style>
+</head>
+
+<body>
+
+<div class="column">
+
+    <fieldset id="template" data-state="open">
+        <legend><span>&#x25BC;</span> Template</legend>
+        {% for stat in template %}
+        <form method="get" action="/api/stat/remove/{{ stat.name|urlencode }}">
+            <var>{{ stat.name }}</var>
+            {% match stat.typ -%}
+                {%- when StatType::Number -%}<input type="button" value="number">
+                {%- when StatType::Boolean -%}<input type="button" value="boolean">
+            {%- endmatch -%}
+            <input type="submit" value="remove">
+        </form>
+        <hr>
+        {% endfor %}
+        <form method="get" action="/api/stat/new">
+            <input type="submit" value="add">
+            <input type="text" name="name" placeholder="name" size="16">
+            <select name="type">
+                <option>number</option>
+                <option>boolean</option>
+            </select>
+        </form>
+    </fieldset>
+
+    <fieldset id="characters" data-state="open">
+        <legend><span>&#x25BC;</span> Characters</legend>
+        <ul>
+            {% for character in characters %}
+            <li>{{ character.name }} <form method="get" action="/api/character/remove/{{ character.name|urlencode }}"><input type="submit" value="remove"></form></li>
+            {% endfor %}
+        </ul>
+        <hr>
+        <form method="get">
+            <input type="submit" value="add" formaction="/api/character/new">
+            <input type="text" name="name" placeholder="name" size="16">
+        </form>
+    </fieldset>
+
+</div>
+
+<div class="column">
+
+    {% for character in characters %}
+    <fieldset id="{{ character.name|urlencode }}" data-state="open">
+        <legend><span>&#x25BC;</span> {{ character.name }}</legend>
+        <table>
+        {% for stat in character.stats %}
+            <tr>
+                <td><var>{{ stat.name }}</var></td>
+                <td class="text-right">
+                    {%- match stat.typ -%}
+                        {%- when StatType::Number -%}<form method="get"><input type="submit" value="+" formaction="/api/character/increment/{{ character.name|urlencode }}/{{ stat.name|urlencode }}"></form>{{ stat.value }}<form method="get"><input type="submit" value="-" formaction="/api/character/decrement/{{ character.name|urlencode }}/{{ stat.name|urlencode }}"></form>
+                        {%- when StatType::Boolean -%}<form method="get" action="/api/character/toggle/{{ character.name|urlencode }}/{{ stat.name|urlencode }}"><input type="checkbox" name="toggle" value="{{ stat.value }}" {% if stat.value == 1 %}checked{% else %}{% endif %} onChange="this.form.submit()"></form>
+                    {%- endmatch -%}
+                </td>
+            </tr>
+        {% endfor %}
+        </table>
+    </fieldset>
+    {% endfor %}
+
+</div>
+
+<div class="column">
+
+    <!-- TODO: add damage curve support -->
+
+    <fieldset id="weapon" data-state="open">
+        <legend><span>&#x25BC;</span> Weapon</legend>
+        {% match weapon %}
+            {% when Some with (val) %}
+                <p>lvl {{ val.level }} {{ val.rarity }} {{ val.typ }}</p>
+                <p><b>{{ val.name() }}</b></p>
+                <table>
+                    <tr><td>damage</td><td class="text-right">{{ val.damage() }}</td></tr>
+                    <tr><td>range</td><td class="text-right">{{ val.range() }}</td></tr>
+                </table>
+                <ul>
+                    {% for detail in val.details() %}
+                    <li>{{ detail }}</li>
+                    {% endfor %}
+                </ul>
+                <var>{{ val.id }}</var>
+                <script>history.pushState(null, '', '/');</script>
+            {% when None %}
+        {% endmatch %}
+        <hr>
+        <form method="get" action="/api/weapon/build">
+            <input type="submit" value="build">
+            <input type="text" name="id" placeholder="000:000:000:000:000:000" size="23">
+        </form>
+        <br>
+        <form method="get" action="/api/weapon/generate">
+            <input type="submit" value="generate">
+            <input type="number" name="level" value="0" size="8">
+        </form>
+    </fieldset>
+
+    <fieldset id="weapon-parts" data-state="open">
+        <legend><span>&#x25BC;</span> Parts</legend>
+        <ul>
+            {% for part in parts %}
+            <li><var>{{ part.name }}</var> - <var>{{ part.details }}</var> <input type="button" value="{{ part.typ }}"><input type="button" value="{{ part.rarity }}"><form method="get" action="/api/weapon/part/remove/{{ part.name|urlencode }}"><input type="submit" value="remove"></form></li>
+            {% endfor %}
+        </ul>
+        <hr>
+        <form method="get" action="/api/weapon/part/new">
+            <input type="submit" value="add">
+            <input type="text" name="name" placeholder="name" size="16">
+            <input type="text" name="details" placeholder="details" size="16">
+            <select name="part">
+                <option>body</option>
+                <option>barrel</option>
+                <option>magazine</option>
+                <option>stock</option>
+            </select>
+            <select name="rarity">
+                <option>common</option>
+                <option>uncommon</option>
+                <option>rare</option>
+                <option>legendary</option>
+                <option>unique</option>
+            </select>
+        </form>
+        <br>
+        <form method="get" action="/api/weapon/part/init">
+            <input type="submit" value="init">
+        </form>
+    </fieldset>
+
+</div>
+
+<!-- TODO: add shield support -->
+
+<script>
+    document.querySelectorAll("fieldset > legend").forEach(el => {
+        el.addEventListener("click", ev => {
+            const parent = el.parentElement;
+            const symbol = el.children[0];
+
+            parent.dataset.state = (parent.dataset.state == "open" ? "closed" : "open");
+
+            const open = parent.dataset.state == "open";
+
+            symbol.innerHTML = (open ? "&#x25BC;" : "&#x25BA;");
+            for (let i = 1; i < el.parentElement.children.length; i++) {
+                const element = el.parentElement.children[i];
+                element.style.display = (open ? "" : "none");
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

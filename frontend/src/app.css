@@ -1,0 +1,74 @@
+* {
+  font-family: monospace;
+}
+
+body {
+  display: flex;
+  overflow-x: scroll;
+}
+
+#app {
+  display: flex;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+form {
+  display: inline-block;
+}
+
+fieldset {
+  display: inline-block;
+  border: 1px solid #a0a0a0;
+  margin: 0.5rem;
+  white-space: nowrap;
+}
+
+legend {
+  background-color: #000;
+  color: #fff;
+  padding: 3px 6px;
+  user-select: none;
+}
+
+input {
+  margin: 0.4rem;
+}
+
+p {
+  margin: 0.25rem 0;
+}
+
+table {
+  width: 100%;
+}
+
+td {
+  padding: 0;
+}
+
+hr {
+  display: block;
+  height: 1px;
+  border: 0;
+  border-top: 1px solid #a0a0a0;
+  margin: 0.5em 0;
+  padding: 0;
+}
+
+ul {
+  margin: 0.5em 0;
+  padding-left: 1.5rem;
+}
+
+code {
+  appearance: button;
+}
+
+.text-right {
+  text-align: right;
+}
